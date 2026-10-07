@@ -28,8 +28,30 @@ public class VRSimulationPlayer : MonoBehaviour
     [SerializeField] private VRSimulationRightHand rightHand;
     [SerializeField, Min(0.1f)] private float pointingMoveDistance = 1.5f;
 
-    private VRSimulationControls controls;
+    [Header("Slope Movement")]
+    [SerializeField, Range(0f, 89f)]
+    private float maxSlopeAngle = 60f;
 
+    [SerializeField]
+    private float groundCheckDistance = 2f;
+
+    [SerializeField]
+    private float groundCheckStartHeight = 0.2f;
+
+    [SerializeField]
+    private LayerMask groundLayers = ~0;
+
+    [Header("acceleratrion & speed")]
+    [SerializeField] private float maxMoveSpeed = 3f;
+    [SerializeField] private float acceleration = 8f;
+    [SerializeField] private float deceleration = 10f;
+
+    private float currentMoveSpeed = 0f;
+
+    private VRSimulationControls controls;
+    private bool dpadLookMode;
+    public bool LeftGripPressed { get; private set; }
+    public bool RightGripPressed { get; private set; }
     private void Awake()
     {
         controls = new VRSimulationControls();
@@ -59,11 +81,33 @@ public class VRSimulationPlayer : MonoBehaviour
 
     private void Update()
     {
+        ReadInteractionButtons();
+        HandleDPadMode();
         Move();
         Look();
         HandlePointingMovement();
     }
 
+    private void ReadInteractionButtons()
+    {
+        LeftGripPressed = controls.LeftHand.Grip.IsPressed();
+        RightGripPressed = controls.RightHand.Grip.IsPressed();
+    }
+    private void HandleDPadMode()
+    {
+        Gamepad gamepad = Gamepad.current;
+
+        if (gamepad != null && gamepad.selectButton.wasPressedThisFrame)
+        {
+            dpadLookMode = !dpadLookMode;
+
+            Debug.Log(
+                dpadLookMode
+                    ? "D-Pad: LOOK MODE"
+                    : "D-Pad: MOVE MODE"
+            );
+        }
+    }
     private void HandlePointingMovement()
     {
         Gamepad gamepad = Gamepad.current;
@@ -105,10 +149,44 @@ public class VRSimulationPlayer : MonoBehaviour
 
     private void Move()
     {
+        // WASD / Player.Move vẫn luôn hoạt động.
         Vector2 moveInput = controls.Player.Move.ReadValue<Vector2>();
-        float verticalInput = controls.Player.VerticalMove.ReadValue<float>();
 
-        // Di chuyển theo hướng của đầu nhưng giữ chuyển động trên mặt phẳng.
+        // Chỉ dùng D-Pad để di chuyển khi KHÔNG ở Look Mode.
+        if (!dpadLookMode)
+        {
+            Vector2 dpadInput = Vector2.zero;
+
+            if (controls.DPad.Left.IsPressed())
+                dpadInput.x -= 1f;
+
+            if (controls.DPad.Right.IsPressed())
+                dpadInput.x += 1f;
+
+            if (controls.DPad.Down.IsPressed())
+                dpadInput.y -= 1f;
+
+            if (controls.DPad.Up.IsPressed())
+                dpadInput.y += 1f;
+
+            if (dpadInput != Vector2.zero)
+                moveInput += dpadInput;
+
+            moveInput = Vector2.ClampMagnitude(moveInput, 1f);
+        }
+
+        float verticalInput =
+            controls.Player.VerticalMove.ReadValue<float>();
+
+        Gamepad gamepad = Gamepad.current;
+
+        if (gamepad != null && gamepad.buttonEast.isPressed)
+            verticalInput = 1f;
+
+        // --------------------------------------------------
+        // XÁC ĐỊNH HƯỚNG DI CHUYỂN
+        // --------------------------------------------------
+
         Vector3 forward = head.forward;
         Vector3 right = head.right;
 
@@ -118,42 +196,146 @@ public class VRSimulationPlayer : MonoBehaviour
         forward.Normalize();
         right.Normalize();
 
-        Vector3 movement =
+        Vector3 horizontalMovement =
             forward * moveInput.y +
             right * moveInput.x;
 
-        movement *= moveSpeed;
+        bool wantsToMove =
+            horizontalMovement.sqrMagnitude > 0.0001f;
 
-        movement.y = verticalInput * verticalSpeed;
+        // --------------------------------------------------
+        // TĂNG / GIẢM TỐC
+        // --------------------------------------------------
 
-        xrOrigin.transform.position += movement * Time.deltaTime;
+        float targetSpeed = wantsToMove
+            ? maxMoveSpeed
+            : 0f;
+
+        float rate = targetSpeed > currentMoveSpeed
+            ? acceleration
+            : deceleration;
+
+        currentMoveSpeed = Mathf.MoveTowards(
+            currentMoveSpeed,
+            targetSpeed,
+            rate * Time.deltaTime
+        );
+
+        // --------------------------------------------------
+        // DI CHUYỂN NGANG + LEO DỐC
+        // --------------------------------------------------
+
+        if (wantsToMove && currentMoveSpeed > 0.0001f)
+        {
+            horizontalMovement.Normalize();
+
+            Vector3 movementDirection = horizontalMovement;
+
+            if (TryGetGround(out RaycastHit hit))
+            {
+                float slopeAngle =
+                    Vector3.Angle(hit.normal, Vector3.up);
+
+                if (slopeAngle <= maxSlopeAngle)
+                {
+                    Vector3 slopeMovement =
+                        Vector3.ProjectOnPlane(
+                            horizontalMovement,
+                            hit.normal
+                        );
+
+                    if (slopeMovement.sqrMagnitude > 0.0001f)
+                    {
+                        slopeMovement.Normalize();
+                        movementDirection = slopeMovement;
+                    }
+                }
+                else
+                {
+                    // Dốc quá cao → không cho đi lên.
+                    movementDirection = Vector3.zero;
+                }
+            }
+
+            if (movementDirection.sqrMagnitude > 0.0001f)
+            {
+                xrOrigin.transform.position +=
+                    movementDirection *
+                    currentMoveSpeed *
+                    Time.deltaTime;
+            }
+        }
+
+        // --------------------------------------------------
+        // CTRL / SPACE / GAMEPAD → DI CHUYỂN DỌC RIÊNG
+        // --------------------------------------------------
+
+        xrOrigin.transform.position +=
+            Vector3.up *
+            verticalInput *
+            verticalSpeed *
+            Time.deltaTime;
     }
 
+    private bool TryGetGround(out RaycastHit hit)
+    {
+        Vector3 origin = xrOrigin.transform.position;
+        origin.y += groundCheckStartHeight;
+
+        return Physics.Raycast(
+            origin,
+            Vector3.down,
+            out hit,
+            groundCheckDistance + groundCheckStartHeight,
+            groundLayers,
+            QueryTriggerInteraction.Ignore
+        );
+    }
     private void Look()
     {
+        // Chuột vẫn luôn nhìn được.
         Vector2 lookInput = controls.Player.Look.ReadValue<Vector2>();
 
-        Vector2 dpadInput = Vector2.zero;
-        if (controls.DPad.Left.IsPressed()) dpadInput.x -= 1f;
-        if (controls.DPad.Right.IsPressed()) dpadInput.x += 1f;
-        if (controls.DPad.Down.IsPressed()) dpadInput.y -= 1f;
-        if (controls.DPad.Up.IsPressed()) dpadInput.y += 1f;
+        Vector2 dpadLookInput = Vector2.zero;
 
-        float yaw = lookInput.x * lookSensitivity
-                    + dpadInput.x * dpadLookSpeed * Time.deltaTime;
-        float pitchDelta = -lookInput.y * lookSensitivity
-                           - dpadInput.y * dpadLookSpeed * Time.deltaTime;
+        // Khi Select đã bật, D-Pad chuyển sang điều khiển camera.
+        if (dpadLookMode)
+        {
+            if (controls.DPad.Left.IsPressed())
+                dpadLookInput.x -= 1f;
+
+            if (controls.DPad.Right.IsPressed())
+                dpadLookInput.x += 1f;
+
+            if (controls.DPad.Down.IsPressed())
+                dpadLookInput.y -= 1f;
+
+            if (controls.DPad.Up.IsPressed())
+                dpadLookInput.y += 1f;
+        }
+
+        float yaw =
+            lookInput.x * lookSensitivity +
+            dpadLookInput.x * dpadLookSpeed * Time.deltaTime;
+
+        float pitchDelta =
+            -lookInput.y * lookSensitivity -
+            dpadLookInput.y * dpadLookSpeed * Time.deltaTime;
 
         if (xrOrigin != null && Mathf.Abs(yaw) > 0f)
             xrOrigin.transform.Rotate(Vector3.up, yaw, Space.World);
 
-        // XR tracking may overwrite the Camera's own localRotation every frame.
-        // Apply pitch to the parent pivot instead (usually Camera Offset).
         if (lookPitchPivot != null)
         {
-            currentLookPitch = Mathf.Clamp(currentLookPitch + pitchDelta, -80f, 80f);
+            currentLookPitch = Mathf.Clamp(
+                currentLookPitch + pitchDelta,
+                -80f,
+                80f
+            );
+
             lookPitchPivot.localRotation =
-                pitchPivotBaseRotation * Quaternion.Euler(currentLookPitch, 0f, 0f);
+                pitchPivotBaseRotation *
+                Quaternion.Euler(currentLookPitch, 0f, 0f);
         }
     }
 }
