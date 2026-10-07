@@ -1340,6 +1340,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -23
       objectReference: {fileID: 0}
+    - target: {fileID: 7246372462492455782, guid: 4b98210b178f42d44965f8d66f885d96, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8669487453063378109, guid: 4b98210b178f42d44965f8d66f885d96, type: 3}
       propertyPath: m_Name
       value: Control&player
