@@ -2,61 +2,79 @@
 
 public class VRPopupZone : MonoBehaviour
 {
-    public GameObject popup;          // Canvas ảnh (World Space)
-    public Transform playerCamera;    // Main Camera
-    public float distance = 1.5f;     // khoảng cách trước mặt
-    public float heightOffset = 0f;   // lệch cao so với tầm mắt (vd -0.1)
+    public GameObject popup;
+    public GameObject dimSphere;
+    public Transform playerCamera;
+    public float distance = 1.0f;
+    public float heightOffset = 0f;
+    public float rotateSpeed = 8f;
 
-    public bool followPosition = true; // true: ảnh đi theo người chơi
-    public float followSpeed = 4f;     // độ mượt khi đi theo
-    public float rotateSpeed = 8f;     // độ mượt khi xoay
+    Renderer cubeRenderer;
+    bool isInside;
 
-    bool IsPlayer(Collider other) => other.CompareTag("Player");
+    bool IsPlayer(Collider other) =>
+        other.CompareTag("Player") || other.CompareTag("MainCamera");
+
+    void Start()
+    {
+        cubeRenderer = GetComponent<Renderer>();   // Mesh Renderer của chính Cube
+        popup.SetActive(false);
+        if (dimSphere) dimSphere.SetActive(false);
+    }
 
     void OnTriggerEnter(Collider other)
     {
-        if (!IsPlayer(other)) return;
+        if (!IsPlayer(other) || isInside) return;
+        isInside = true;
+
+        if (cubeRenderer) cubeRenderer.enabled = false;   // ẩn Cube khi chạm
+
+        Vector3 fwd = playerCamera.forward;
+        fwd.y = 0f;
+        if (fwd.sqrMagnitude < 0.001f) fwd = Vector3.forward;
+        fwd.Normalize();
+
+        Vector3 pos = playerCamera.position + fwd * distance;
+        pos.y = playerCamera.position.y + heightOffset;
+        popup.transform.position = pos;
+
         popup.SetActive(true);
-        Place(true);
+        FaceCamera(true);
+
+        if (dimSphere)
+        {
+            dimSphere.transform.position = playerCamera.position;
+            dimSphere.SetActive(true);
+        }
     }
 
     void OnTriggerExit(Collider other)
     {
-        if (IsPlayer(other)) popup.SetActive(false);
+        if (!IsPlayer(other)) return;
+        isInside = false;
+
+        if (cubeRenderer) cubeRenderer.enabled = true;    // hiện lại Cube khi ra ngoài
+
+        popup.SetActive(false);
+        if (dimSphere) dimSphere.SetActive(false);
     }
 
     void LateUpdate()
     {
-        if (popup.activeSelf) Place(false);
+        if (!isInside) return;
+        if (dimSphere) dimSphere.transform.position = playerCamera.position;
+        FaceCamera(false);
     }
 
-    void Place(bool instant)
+    void FaceCamera(bool instant)
     {
-        Transform t = popup.transform;
-        Vector3 pos = t.position;
-
-        // Vị trí: trước mặt người chơi, chỉ theo hướng ngang
-        if (instant || followPosition)
-        {
-            Vector3 fwd = playerCamera.forward;
-            fwd.y = 0f;
-            if (fwd.sqrMagnitude < 0.001f) fwd = t.forward; // phòng khi nhìn thẳng lên/xuống
-            fwd.Normalize();
-
-            Vector3 target = playerCamera.position + fwd * distance;
-            target.y = playerCamera.position.y + heightOffset;
-
-            pos = instant ? target : Vector3.Lerp(t.position, target, followSpeed * Time.deltaTime);
-        }
-
-        // Xoay: quay mặt về người chơi, giữ thẳng đứng (bỏ thành phần Y)
-        Vector3 dir = pos - playerCamera.position;
+        Vector3 dir = popup.transform.position - playerCamera.position;
         dir.y = 0f;
-        if (dir.sqrMagnitude < 0.0001f) { t.position = pos; return; }
+        if (dir.sqrMagnitude < 0.0001f) return;
 
-        Quaternion rot = Quaternion.LookRotation(dir);
-        if (!instant) rot = Quaternion.Slerp(t.rotation, rot, rotateSpeed * Time.deltaTime);
-
-        t.SetPositionAndRotation(pos, rot);
+        Quaternion target = Quaternion.LookRotation(dir);
+        popup.transform.rotation = (instant || rotateSpeed <= 0f)
+            ? target
+            : Quaternion.Slerp(popup.transform.rotation, target, rotateSpeed * Time.deltaTime);
     }
 }
