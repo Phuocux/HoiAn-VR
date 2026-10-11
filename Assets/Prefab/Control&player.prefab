@@ -199,6 +199,16 @@ MonoBehaviour:
   leftHand: {fileID: 4453748730303185002}
   rightHand: {fileID: 4915535836929098320}
   pointingMoveDistance: 2
+  maxSlopeAngle: 60
+  groundCheckDistance: 2
+  groundCheckStartHeight: 0.2
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  maxMoveSpeed: 3
+  acceleration: 8
+  deceleration: 10
+  useGravity: 1
 --- !u!1 &8147192374940971022
 GameObject:
   m_ObjectHideFlags: 0
