@@ -29,6 +29,7 @@ public class ResetSimulatorOnEntry : MonoBehaviour
             yield return null;
         }
 
-        Instantiate(simulatorPrefab);
+        GameObject newSimulator = Instantiate(simulatorPrefab);
+        DontDestroyOnLoad(newSimulator);
     }
 }
