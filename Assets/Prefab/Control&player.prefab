@@ -107,6 +107,8 @@ MonoBehaviour:
   maxY: 0.3
   minZ: 0.1
   maxZ: 0.6
+  paddleHoldRange: 0.35
+  bikeHoldRangeX: 0.05
 --- !u!114 &4915535836929098320
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -128,6 +130,8 @@ MonoBehaviour:
   maxY: 0.3
   minZ: 0.1
   maxZ: 0.6
+  paddleHoldRange: 0.35
+  bikeHoldRangeX: 0.05
 --- !u!1 &6511186170306131713
 GameObject:
   m_ObjectHideFlags: 0
@@ -208,7 +212,6 @@ MonoBehaviour:
   maxMoveSpeed: 3
   acceleration: 8
   deceleration: 10
-  useGravity: 1
 --- !u!1 &8147192374940971022
 GameObject:
   m_ObjectHideFlags: 0

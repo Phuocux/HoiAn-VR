@@ -394,7 +394,7 @@
                 },
                 {
                     "name": "",
-                    "id": "bca19525-f16b-4117-a607-c804754065d8",
+                    "id": "35e50aeb-0228-4235-a05c-f70708404318",
                     "path": "<Gamepad>/buttonWest",
                     "interactions": "",
                     "processors": "",
@@ -410,17 +410,6 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "Generic XR Controller",
-                    "action": "Activate",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "6c255b24-b3bd-48fb-8f7b-dc18a2db1f90",
-                    "path": "<Gamepad>/buttonNorth",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
                     "action": "Activate",
                     "isComposite": false,
                     "isPartOfComposite": false
@@ -671,7 +660,7 @@
                     "name": "Select",
                     "type": "Button",
                     "id": "ac96c10b-c955-4a46-8e67-bf16bc069b53",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -689,7 +678,7 @@
                     "name": "Activate",
                     "type": "Button",
                     "id": "41976d89-60de-4deb-bff9-16b4af96b290",
-                    "expectedControlType": "",
+                    "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -820,17 +809,6 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "Generic XR Controller",
-                    "action": "Activate",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "cf67e795-2590-4caf-a112-bd601722c53d",
-                    "path": "<Gamepad>/buttonEast",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
                     "action": "Activate",
                     "isComposite": false,
                     "isPartOfComposite": false
@@ -991,7 +969,7 @@
                 },
                 {
                     "name": "",
-                    "id": "4e27edfd-37f2-4f93-a1fe-88de24cd7f1e",
+                    "id": "5918d3ac-ee83-4583-9bcb-e6948f773001",
                     "path": "<Gamepad>/buttonSouth",
                     "interactions": "",
                     "processors": "",

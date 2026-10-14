@@ -1114,38 +1114,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1612155048}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &393426840
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 393426841}
-  m_Layer: 0
-  m_Name: VR Simulation Controller.
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &393426841
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 393426840}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3.69825, y: 0.22462, z: -3.60652}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1870164088}
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &452692352
 GameObject:
   m_ObjectHideFlags: 0
@@ -4295,72 +4263,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1870164087
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1870164088}
-  - component: {fileID: 1870164089}
-  m_Layer: 0
-  m_Name: VRSimulationPlayer
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1870164088
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1870164087}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 393426841}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1870164089
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1870164087}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 321b6a7c61f6f2b41a7acd78e826cff2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::VRSimulationPlayer
-  xrOrigin: {fileID: 0}
-  head: {fileID: 0}
-  moveSpeed: 3
-  verticalSpeed: 3
-  lookSensitivity: 0.1
-  dpadLookSpeed: 60
-  lookPitchPivot: {fileID: 0}
-  leftHandController: {fileID: 0}
-  rightHandController: {fileID: 0}
-  leftHand: {fileID: 0}
-  rightHand: {fileID: 0}
-  pointingMoveDistance: 1.5
-  maxSlopeAngle: 60
-  groundCheckDistance: 2
-  groundCheckStartHeight: 0.2
-  groundLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  maxMoveSpeed: 3
-  acceleration: 8
-  deceleration: 10
-  useGravity: 1
 --- !u!1 &1904218339
 GameObject:
   m_ObjectHideFlags: 0
@@ -5195,7 +5097,6 @@ SceneRoots:
   m_Roots:
   - {fileID: 756192408}
   - {fileID: 2092139010}
-  - {fileID: 393426841}
   - {fileID: 1998376009}
   - {fileID: 641941384}
   - {fileID: 1360976088}

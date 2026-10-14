@@ -47,15 +47,13 @@ public class VRSimulationPlayer : MonoBehaviour
     [SerializeField] private float deceleration = 10f;
 
     private float currentMoveSpeed = 0f;
-    [Header("Collision")]
-    [SerializeField] private bool useGravity = true;
-    private CharacterController cc;
-    private float verticalVelocity;
 
     private VRSimulationControls controls;
     private bool dpadLookMode;
     public bool LeftGripPressed { get; private set; }
     public bool RightGripPressed { get; private set; }
+
+    private bool boatLookOnly;
     private void Awake()
     {
         controls = new VRSimulationControls();
@@ -66,7 +64,6 @@ public class VRSimulationPlayer : MonoBehaviour
 
         if (lookPitchPivot != null)
             pitchPivotBaseRotation = lookPitchPivot.localRotation;
-        if (xrOrigin != null) cc = xrOrigin.GetComponent<CharacterController>();
     }
 
     private void OnEnable()
@@ -86,19 +83,22 @@ public class VRSimulationPlayer : MonoBehaviour
 
     private void Update()
     {
-        ReadInteractionButtons();
         HandleDPadMode();
-        Move();
+
+        if (!boatLookOnly)
+        {
+            Move();
+            HandlePointingMovement();
+        }
+
         Look();
-        HandlePointingMovement();
     }
 
-    private void MoveOrigin(Vector3 delta)
+
+    public void SetBoatLookOnly(bool value)
     {
-        if (cc != null && cc.enabled) cc.Move(delta);
-        else xrOrigin.transform.position += delta;
+        boatLookOnly = value;
     }
-
     private void ReadInteractionButtons()
     {
         LeftGripPressed = controls.LeftHand.Grip.IsPressed();
@@ -155,8 +155,7 @@ public class VRSimulationPlayer : MonoBehaviour
             return;
 
         direction.Normalize();
-        // xrOrigin.transform.position += direction * pointingMoveDistance;
-        MoveOrigin(direction * pointingMoveDistance);
+        xrOrigin.transform.position += direction * pointingMoveDistance;
     }
 
     private void Move()
@@ -271,11 +270,10 @@ public class VRSimulationPlayer : MonoBehaviour
 
             if (movementDirection.sqrMagnitude > 0.0001f)
             {
-                //xrOrigin.transform.position +=
-                //    movementDirection *
-                //    currentMoveSpeed *
-                 //   Time.deltaTime;
-                MoveOrigin(movementDirection * currentMoveSpeed * Time.deltaTime);
+                xrOrigin.transform.position +=
+                    movementDirection *
+                    currentMoveSpeed *
+                    Time.deltaTime;
             }
         }
 
@@ -283,24 +281,11 @@ public class VRSimulationPlayer : MonoBehaviour
         // CTRL / SPACE / GAMEPAD → DI CHUYỂN DỌC RIÊNG
         // --------------------------------------------------
 
-        //xrOrigin.transform.position +=
-        //    Vector3.up *
-        //    verticalInput *
-        //    verticalSpeed *
-        //    Time.deltaTime;
-        if (Mathf.Abs(verticalInput) > 0.01f)
-        {
-            // Đang bay lên bằng Space/Ctrl/nút gamepad: bỏ trọng lực
-            verticalVelocity = 0f;
-            MoveOrigin(Vector3.up * verticalInput * verticalSpeed * Time.deltaTime);
-        }
-        else if (useGravity)
-        {
-            if (cc != null && cc.isGrounded && verticalVelocity < 0f)
-                verticalVelocity = -2f;
-            verticalVelocity += Physics.gravity.y * Time.deltaTime;
-            MoveOrigin(Vector3.up * verticalVelocity * Time.deltaTime);
-        }
+        xrOrigin.transform.position +=
+            Vector3.up *
+            verticalInput *
+            verticalSpeed *
+            Time.deltaTime;
     }
 
     private bool TryGetGround(out RaycastHit hit)
@@ -340,16 +325,30 @@ public class VRSimulationPlayer : MonoBehaviour
                 dpadLookInput.y += 1f;
         }
 
+        // ==============================
+        // YAW — TRÁI / PHẢI
+        // ==============================
+
         float yaw =
             lookInput.x * lookSensitivity +
             dpadLookInput.x * dpadLookSpeed * Time.deltaTime;
 
+        if (xrOrigin != null && Mathf.Abs(yaw) > 0f)
+        {
+            xrOrigin.transform.Rotate(
+                Vector3.up,
+                yaw,
+                Space.World
+            );
+        }
+
+        // ==============================
+        // PITCH — LÊN / XUỐNG
+        // ==============================
+
         float pitchDelta =
             -lookInput.y * lookSensitivity -
             dpadLookInput.y * dpadLookSpeed * Time.deltaTime;
-
-        if (xrOrigin != null && Mathf.Abs(yaw) > 0f)
-            xrOrigin.transform.Rotate(Vector3.up, yaw, Space.World);
 
         if (lookPitchPivot != null)
         {
@@ -359,13 +358,16 @@ public class VRSimulationPlayer : MonoBehaviour
                 80f
             );
 
+            Quaternion targetPitch =
+                Quaternion.Euler(
+                    currentLookPitch,
+                    0f,
+                    0f
+                );
+
             lookPitchPivot.localRotation =
                 pitchPivotBaseRotation *
-                Quaternion.Euler(currentLookPitch, 0f, 0f);
+                targetPitch;
         }
-    }
-    void OnControllerColliderHit(ControllerColliderHit hit)
-    {
-        Debug.Log("Chạm: " + hit.collider.name + " | normal: " + hit.normal);
     }
 }
