@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 [RequireComponent(typeof(Rigidbody))]
@@ -12,35 +13,55 @@ public class LanternFloat : MonoBehaviour
     XRGrabInteractable grab;
     WaterZone water;
     WaterZone[] zones;
-    Quaternion floatRotation;
     float seed;
+    Vector3 respawnPos;
 
     void Awake()
     {
-        floatRotation = Quaternion.identity;
         rb = GetComponent<Rigidbody>();
         grab = GetComponent<XRGrabInteractable>();
         seed = Random.value * 10f;
     }
 
+    void OnEnable()
+    {
+        if (grab != null) grab.selectExited.AddListener(OnReleased);
+    }
+
+    void OnDisable()
+    {
+        if (grab != null) grab.selectExited.RemoveListener(OnReleased);
+    }
+
     void Start()
     {
         zones = FindObjectsByType<WaterZone>(FindObjectsSortMode.None);
+        respawnPos = transform.position;
+    }
+
+    // Thả tay: nếu chưa ở nước thì cho rơi tự do và vẫn nhặt lại được
+    void OnReleased(SelectExitEventArgs args)
+    {
+        if (water != null) return;
+        rb.isKinematic = false;
+        rb.useGravity = true;
     }
 
     void Update()
     {
         // Đang cầm trên tay thì không làm gì
         if (grab != null && grab.isSelected) return;
-        if (water == null && grab != null && !grab.enabled)
-        {
-            grab.enabled = true;
-            rb.isKinematic = false;
-            rb.useGravity = true;
-        }
 
         if (water == null)
         {
+            // Rơi xuyên nền thì đưa về chỗ cũ
+            if (transform.position.y < -20f)
+            {
+                transform.position = respawnPos;
+                if (!rb.isKinematic) rb.linearVelocity = Vector3.zero;
+                return;
+            }
+
             Vector3 p = transform.position;
             foreach (var z in zones)
             {
@@ -53,7 +74,6 @@ public class LanternFloat : MonoBehaviour
                     water = z;
                     rb.useGravity = false;
                     rb.isKinematic = true;
-                    if (grab != null) grab.enabled = false;
                     Debug.Log("Đèn đã vào nước, bắt đầu trôi");
                     break;
                 }
@@ -61,11 +81,13 @@ public class LanternFloat : MonoBehaviour
             return;
         }
 
+        // Đã ở nước: trôi và nhấp nhô
         Vector3 pos = transform.position;
         pos += water.Flow * Time.deltaTime;
         float bob = Mathf.Sin(Time.time * bobSpeed + seed) * bobHeight;
         pos.y = Mathf.Lerp(pos.y, water.SurfaceY + floatOffset + bob, Time.deltaTime * 5f);
         transform.position = pos;
+
         Quaternion target = Quaternion.Euler(-90f, transform.eulerAngles.y, 0f);
         transform.rotation = Quaternion.Slerp(transform.rotation, target, Time.deltaTime * 4f);
     }
