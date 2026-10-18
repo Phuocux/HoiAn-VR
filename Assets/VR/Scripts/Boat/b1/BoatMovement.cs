@@ -63,6 +63,12 @@ public class BoatMovement : MonoBehaviour
     private float currentForwardSpeed;
     private float currentTurnSpeed;
 
+    [Header("Collision")]
+    [SerializeField] private BoxCollider collisionBox;
+    [SerializeField] private LayerMask obstacleMask;
+
+    [SerializeField, Min(0f)]
+    private float collisionSkin = 0.03f;
     private void Awake()
     {
         Rigidbody rb = GetComponent<Rigidbody>();
@@ -179,10 +185,12 @@ public class BoatMovement : MonoBehaviour
             Space.Self
         );
 
-        transform.position +=
-            transform.up *
-            currentForwardSpeed *
-            Time.deltaTime;
+        Vector3 movement =
+    transform.up *
+    currentForwardSpeed *
+    Time.deltaTime;
+
+        MoveWithCollision(movement);
 
         // ==================================================
         // LOCK HEIGHT
@@ -221,5 +229,87 @@ public class BoatMovement : MonoBehaviour
     public float GetTurnSpeed()
     {
         return currentTurnSpeed;
+    }
+
+    private void MoveWithCollision(Vector3 movement)
+    {
+        if (movement.sqrMagnitude < 0.000001f)
+            return;
+
+        if (collisionBox == null)
+        {
+            transform.position += movement;
+            return;
+        }
+
+        float distance = movement.magnitude;
+        Vector3 direction = movement / distance;
+
+        Transform boxTransform = collisionBox.transform;
+
+        Vector3 scale = boxTransform.lossyScale;
+
+        Vector3 halfExtents = Vector3.Scale(
+            collisionBox.size * 0.5f,
+            new Vector3(
+                Mathf.Abs(scale.x),
+                Mathf.Abs(scale.y),
+                Mathf.Abs(scale.z)
+            )
+        );
+
+        Vector3 center =
+            boxTransform.TransformPoint(collisionBox.center);
+
+        Quaternion boxRotation = boxTransform.rotation;
+
+        Physics.SyncTransforms();
+
+        // 1. Kiểm tra đường di chuyển phía trước.
+        bool hitObstacle = Physics.BoxCast(
+            center,
+            halfExtents,
+            direction,
+            out RaycastHit hit,
+            boxRotation,
+            distance + collisionSkin,
+            obstacleMask,
+            QueryTriggerInteraction.Ignore
+        );
+
+        if (hitObstacle)
+        {
+            float allowedDistance = Mathf.Clamp(
+                hit.distance - collisionSkin,
+                0f,
+                distance
+            );
+
+            transform.position += direction * allowedDistance;
+
+            // Ngừng đà chèo khi va chạm.
+            currentForwardSpeed = 0f;
+            return;
+        }
+
+        // 2. Kiểm tra vị trí dự kiến sau khi di chuyển.
+        Vector3 targetCenter = center + movement;
+
+        bool targetBlocked = Physics.CheckBox(
+            targetCenter,
+            halfExtents,
+            boxRotation,
+            obstacleMask,
+            QueryTriggerInteraction.Ignore
+        );
+
+        if (targetBlocked)
+        {
+            currentForwardSpeed = 0f;
+            return;
+        }
+
+        // 3. Không có vật cản thì mới di chuyển.
+        transform.position += movement;
     }
 }
