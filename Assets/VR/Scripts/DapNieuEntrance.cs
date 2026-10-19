@@ -42,11 +42,16 @@ public class DapNieuEntrance : MonoBehaviour
         SetPrompt(nearby);
 
         bool pressedP =
-            Keyboard.current != null &&
-            Keyboard.current.pKey.wasPressedThisFrame;
+        Keyboard.current != null &&
+        Keyboard.current.pKey.wasPressedThisFrame;
 
-        if (!nearby || !pressedP)
+        bool pressedNorth =
+            Gamepad.current != null &&
+            Gamepad.current.buttonNorth.wasPressedThisFrame;
+
+        if (!nearby || (!pressedP && !pressedNorth))
             return;
+
 
         if (!Application.CanStreamedLevelBeLoaded(ScenePath))
         {

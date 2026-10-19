@@ -34,7 +34,7 @@ public class DapNieuGameManager : MonoBehaviour
         {
             bool gamepadPressed =
                 Gamepad.current != null &&
-                Gamepad.current.buttonSouth.wasPressedThisFrame;
+                Gamepad.current.buttonNorth.wasPressedThisFrame;
 
             bool keyboardPressed =
                 Keyboard.current != null &&

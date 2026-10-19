@@ -33,8 +33,15 @@ public class BatSwing : MonoBehaviour
 
     private void Update()
     {
-        if (Keyboard.current != null &&
-            Keyboard.current.lKey.wasPressedThisFrame &&
+        bool keyboardPressed =
+    Keyboard.current != null &&
+    Keyboard.current.lKey.wasPressedThisFrame;
+
+        bool gamepadPressed =
+            Gamepad.current != null &&
+            Gamepad.current.buttonSouth.wasPressedThisFrame;
+
+        if ((keyboardPressed || gamepadPressed) &&
             !isSwinging &&
             swingRoot != null)
         {

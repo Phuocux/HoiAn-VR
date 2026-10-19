@@ -9,12 +9,21 @@ public class ReturnToHoiAn : MonoBehaviour
 
     private bool isLoading;
 
+
     private void Update()
     {
-        if (isLoading || Keyboard.current == null)
+        if (isLoading)
             return;
 
-        if (!Keyboard.current.escapeKey.wasPressedThisFrame)
+        bool escapePressed =
+            Keyboard.current != null &&
+            Keyboard.current.escapeKey.wasPressedThisFrame;
+
+        bool startPressed =
+            Gamepad.current != null &&
+            Gamepad.current.startButton.wasPressedThisFrame;
+
+        if (!escapePressed && !startPressed)
             return;
 
         if (!Application.CanStreamedLevelBeLoaded(MapScenePath))
@@ -32,4 +41,5 @@ public class ReturnToHoiAn : MonoBehaviour
             LoadSceneMode.Single
         );
     }
+
 }
